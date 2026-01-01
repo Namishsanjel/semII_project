@@ -2,6 +2,8 @@
 #include <fstream>
 #include <string>
 #include <limits>
+#include <cstdio>
+
 using namespace std;
 
 /* ---------- BASE CLASS ---------- */
@@ -9,14 +11,21 @@ class User {
 protected:
     string username, password;
 public:
-    virtual void menu() = 0;
+    virtual void menu() = 0;   // pure virtual function
 };
 
-/* ---------- ADMIN CLASS ---------- */
-class Admin : public User {
+/* ---------- ADMIN DATA CLASS ---------- */
+class Admin {
+private:
+    string username, password;
+
 public:
     Admin() {}
-    Admin(string u, string p) { username = u; password = p; }
+
+    Admin(string u, string p) {
+        username = u;
+        password = p;
+    }
 
     void save() {
         ofstream file("admins.txt", ios::app);
@@ -122,6 +131,7 @@ private:
                 case 2: {
                     int id;
                     string status;
+
                     cout << "Enter Complaint ID: ";
                     cin >> id;
                     cin.ignore();
@@ -155,7 +165,9 @@ public:
         int choice;
         do {
             cout << "\n========== ADMIN MENU ==========\n";
-            cout << "1. Login\n2. Register\n3. Exit\n";
+            cout << "1. Login\n";
+            cout << "2. Register\n";
+            cout << "3. Exit\n";
             cout << "Enter choice: ";
             cin >> choice;
 
@@ -168,7 +180,7 @@ public:
                 if (Admin::login(username, password)) {
                     adminMenu();
                 } else {
-                    cout << " Invalid credentials!\n";
+                    cout << "Invalid credentials!\n";
                 }
             }
             else if (choice == 2) {
@@ -177,9 +189,10 @@ public:
                 cout << "New Password: ";
                 cin >> password;
 
-                Admin a(username, password);
+                Admin a(username, password);   // FIXED: not abstract
                 a.save();
-                cout << " Admin registered successfully!\n";
+
+                cout << "Admin registered successfully!\n";
             }
             else if (choice == 3) {
                 cout << "Exiting Admin...\n";
@@ -187,10 +200,12 @@ public:
             else {
                 cout << "Invalid choice!\n";
             }
+
         } while (choice != 3);
     }
 };
 
+/* ---------- MAIN ---------- */
 int main() {
     AdminApp app;
     app.menu();
