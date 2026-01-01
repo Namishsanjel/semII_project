@@ -1,28 +1,41 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <limits>
 using namespace std;
 
-class Admin {
-private:
+/* ---------- BASE CLASS ---------- */
+class User {
+protected:
     string username, password;
-
 public:
-    Admin(string u, string p) {
-        username = u;
-        password = p;
-    }
+    virtual void menu() = 0;
+};
+
+/* ---------- ADMIN CLASS ---------- */
+class Admin : public User {
+public:
+    Admin() {}
+    Admin(string u, string p) { username = u; password = p; }
 
     void save() {
         ofstream file("admins.txt", ios::app);
+        if (!file) {
+            cout << "❌ Error saving admin!\n";
+            return;
+        }
         file << username << " " << password << endl;
         file.close();
     }
 
     static bool login(string u, string p) {
         ifstream file("admins.txt");
-        string user, pass;
+        if (!file) {
+            cout << "❌ Admin file missing!\n";
+            return false;
+        }
 
+        string user, pass;
         while (file >> user >> pass) {
             if (user == u && pass == p) {
                 file.close();
@@ -34,32 +47,42 @@ public:
     }
 };
 
+/* ---------- COMPLAINT MANAGER ---------- */
 class ComplaintManager {
 public:
     static void viewAll() {
         ifstream file("complaints.txt");
-        string line;
+        if (!file) {
+            cout << "❌ No complaints available!\n";
+            return;
+        }
 
+        cout << "\n========== ALL COMPLAINTS ==========\n";
+        string line;
         while (getline(file, line)) {
             cout << line << endl;
         }
         file.close();
     }
 
-    static void updateStatus(int searchId, string newStatus) {
+    static void updateStatus(int id, string status) {
         ifstream file("complaints.txt");
         ofstream temp("temp.txt");
+
+        if (!file || !temp) {
+            cout << "❌ File error!\n";
+            return;
+        }
 
         string line;
         bool found = false;
 
         while (getline(file, line)) {
-            int id;
-            sscanf(line.c_str(), "%d|", &id);
+            int cid;
+            sscanf(line.c_str(), "%d|", &cid);
 
-            if (id == searchId) {
-                size_t last = line.find_last_of('|');
-                line = line.substr(0, last + 1) + newStatus;
+            if (cid == id) {
+                line = line.substr(0, line.find_last_of('|') + 1) + status;
                 found = true;
             }
             temp << line << endl;
@@ -72,83 +95,99 @@ public:
         rename("temp.txt", "complaints.txt");
 
         if (found)
-            cout << "Status updated successfully\n";
+            cout << "✅ Status updated successfully!\n";
         else
-            cout << "Invalid ID\n";
+            cout << "❌ Invalid Complaint ID!\n";
     }
 };
 
-class AdminApp {
-public:
-    void menu() {
-        int choice;
-        do {
-            cout << "\n1. Login\n2. Register\n3. Exit\n";
-            cout << "Enter choice: ";
-            cin >> choice;
-
-            if (choice == 1) {
-                string u, p;
-                cout << "Username: ";
-                cin >> u;
-                cout << "Password: ";
-                cin >> p;
-
-                if (Admin::login(u, p)) {
-                    adminMenu();
-                } else {
-                    cout << "Invalid credentials\n";
-                }
-            }
-            else if (choice == 2) {
-                string u, p;
-                cout << "New Username: ";
-                cin >> u;
-                cout << "New Password: ";
-                cin >> p;
-
-                Admin a(u, p);
-                a.save();
-                cout << "Admin registered successfully\n";
-            }
-            else if (choice == 3) {
-                cout << "Exiting...\n";
-            }
-            else {
-                cout << "Invalid Choice\n";
-            }
-        } while (choice != 3);
-    }
-
+/* ---------- ADMIN APPLICATION ---------- */
+class AdminApp : public User {
 private:
     void adminMenu() {
         int ch;
         do {
-            cout << "\n1. View all complain\n2. Update complain status\n3. Logout\n";
+            cout << "\n========== ADMIN PANEL ==========\n";
+            cout << "1. View All Complaints\n";
+            cout << "2. Update Complaint Status\n";
+            cout << "3. Logout\n";
             cout << "Enter choice: ";
             cin >> ch;
 
-            if (ch == 1) {
-                ComplaintManager::viewAll();
-            }
-            else if (ch == 2) {
-                int id;
-                string status;
-                cout << "Enter Complaint ID: ";
-                cin >> id;
-                cout << "Enter new status (Pending/In progress/Resolved): ";
-                cin.ignore();
-                getline(cin, status);
+            switch (ch) {
+                case 1:
+                    ComplaintManager::viewAll();
+                    break;
 
-                ComplaintManager::updateStatus(id, status);
-            }
-            else if (ch == 3) {
-                cout << "Logging out...\n";
-            }
-            else {
-                cout << "Invalid choice\n";
+                case 2: {
+                    int id;
+                    string status;
+                    cout << "Enter Complaint ID: ";
+                    cin >> id;
+                    cin.ignore();
+
+                    cout << "Enter Status (Pending/In Progress/Resolved): ";
+                    getline(cin, status);
+
+                    if (status != "Pending" &&
+                        status != "In Progress" &&
+                        status != "Resolved") {
+                        cout << "❌ Invalid status!\n";
+                        break;
+                    }
+
+                    ComplaintManager::updateStatus(id, status);
+                    break;
+                }
+
+                case 3:
+                    cout << "Logging out...\n";
+                    break;
+
+                default:
+                    cout << "❌ Invalid choice!\n";
             }
         } while (ch != 3);
+    }
+
+public:
+    void menu() override {
+        int choice;
+        do {
+            cout << "\n========== ADMIN MENU ==========\n";
+            cout << "1. Login\n2. Register\n3. Exit\n";
+            cout << "Enter choice: ";
+            cin >> choice;
+
+            if (choice == 1) {
+                cout << "Username: ";
+                cin >> username;
+                cout << "Password: ";
+                cin >> password;
+
+                if (Admin::login(username, password)) {
+                    adminMenu();
+                } else {
+                    cout << "❌ Invalid credentials!\n";
+                }
+            }
+            else if (choice == 2) {
+                cout << "New Username: ";
+                cin >> username;
+                cout << "New Password: ";
+                cin >> password;
+
+                Admin a(username, password);
+                a.save();
+                cout << "✅ Admin registered successfully!\n";
+            }
+            else if (choice == 3) {
+                cout << "Exiting Admin...\n";
+            }
+            else {
+                cout << "❌ Invalid choice!\n";
+            }
+        } while (choice != 3);
     }
 };
 
