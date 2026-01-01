@@ -1,178 +1,159 @@
 #include <iostream>
 #include <fstream>
-#include <vector>
 #include <string>
-
 using namespace std;
 
-// Base class for person
-class Person {
-protected:
-    string name;
-    string address;
-public:
-    virtual void display() const = 0;
-    virtual ~Person() {}
-};
-
-// Complaint class
-class Complaint : public Person {
+class Admin {
 private:
-    int id;
-    string type;
-    string description;
-    string status;
+    string username, password;
+
 public:
-    static int idCounter;
-
-    Complaint() {}
-
-    void loadFromFile(ifstream& in) {
-        in >> id;
-        in.ignore();
-        getline(in, name);
-        getline(in, address);
-        getline(in, type);
-        getline(in, description);
-        getline(in, status);
-
-        if (id > idCounter) idCounter = id;
-    }
-
-    void display() const override {
-        cout << "\nComplaint ID: " << id
-             << "\nName: " << name
-             << "\nAddress: " << address
-             << "\nType: " << type
-             << "\nDescription: " << description
-             << "\nStatus: " << status << endl;
-    }
-
-    void writeToFile(ofstream& out) const {
-        out << id << endl
-            << name << endl
-            << address << endl
-            << type << endl
-            << description << endl
-            << status << endl;
-    }
-
-    int getId() const { return id; }
-    void setStatus(const string& s) { status = s; }
-};
-
-int Complaint::idCounter = 0;
-
-// Repository class to handle file
-class ComplaintRepository {
-private:
-    vector<Complaint> complaints;
-    string filename;
-public:
-    ComplaintRepository(const string& fname) : filename(fname) {
-        load();
-    }
-
-    void load() {
-        ifstream file(filename);
-        if (!file) return;
-
-        while (file.peek() != EOF) {
-            Complaint c;
-            c.loadFromFile(file);
-            complaints.push_back(c);
-        }
-        file.close();
+    Admin(string u, string p) {
+        username = u;
+        password = p;
     }
 
     void save() {
-        ofstream file(filename);
-        for (const auto& c : complaints)
-            c.writeToFile(file);
+        ofstream file("admins.txt", ios::app);
+        file << username << " " << password << endl;
         file.close();
     }
 
-    vector<Complaint>& getAll() { return complaints; }
-};
+    static bool login(string u, string p) {
+        ifstream file("admins.txt");
+        string user, pass;
 
-// Admin class
-class Admin {
-public:
-    bool login() {
-        string username, password;
-        cout << "Username: ";
-        cin >> username;
-        cout << "Password: ";
-        cin >> password;
-        return username == "admin" && password == "1234";
+        while (file >> user >> pass) {
+            if (user == u && pass == p) {
+                file.close();
+                return true;
+            }
+        }
+        file.close();
+        return false;
     }
 };
 
-// System controller
-class ComplaintSystem {
-private:
-    ComplaintRepository repo;
-    Admin admin;
+class ComplaintManager {
 public:
-    ComplaintSystem(const string& fname) : repo(fname) {}
+    static void viewAll() {
+        ifstream file("complaints.txt");
+        string line;
 
-    void run() {
-        if (!admin.login()) {
-            cout << "Invalid credentials!\n";
-            return;
+        while (getline(file, line)) {
+            cout << line << endl;
+        }
+        file.close();
+    }
+
+    static void updateStatus(int searchId, string newStatus) {
+        ifstream file("complaints.txt");
+        ofstream temp("temp.txt");
+
+        string line;
+        bool found = false;
+
+        while (getline(file, line)) {
+            int id;
+            sscanf(line.c_str(), "%d|", &id);
+
+            if (id == searchId) {
+                size_t last = line.find_last_of('|');
+                line = line.substr(0, last + 1) + newStatus;
+                found = true;
+            }
+            temp << line << endl;
         }
 
+        file.close();
+        temp.close();
+
+        remove("complaints.txt");
+        rename("temp.txt", "complaints.txt");
+
+        if (found)
+            cout << "Status updated successfully\n";
+        else
+            cout << "Invalid ID\n";
+    }
+};
+
+class AdminApp {
+public:
+    void menu() {
         int choice;
         do {
-            cout << "\n--- Admin Menu ---\n"
-                 << "1. View all complaints\n"
-                 << "2. Update complaint status\n"
-                 << "3. Exit\nChoice: ";
+            cout << "\n1. Login\n2. Register\n3. Exit\n";
+            cout << "Enter choice: ";
             cin >> choice;
 
-            switch (choice) {
-                case 1:
-                    for (const auto& c : repo.getAll()) c.display();
-                    break;
-                case 2: {
-                    int id;
-                    cout << "Enter Complaint ID to update: ";
-                    cin >> id;
+            if (choice == 1) {
+                string u, p;
+                cout << "Username: ";
+                cin >> u;
+                cout << "Password: ";
+                cin >> p;
 
-                    bool found = false;
-                    for (auto& c : repo.getAll()) {
-                        if (c.getId() == id) {
-                            cin.ignore();
-                            string s;
-                            cout << "Enter new status: ";
-                            getline(cin, s);
-                            c.setStatus(s);
-                            found = true;
-                            break;
-                        }
-                    }
-
-                    if (found) {
-                        repo.save();
-                        cout << "Status updated!\n";
-                    } else {
-                        cout << "Complaint not found!\n";
-                    }
-                    break;
+                if (Admin::login(u, p)) {
+                    adminMenu();
+                } else {
+                    cout << "Invalid credentials\n";
                 }
-                case 3:
-                    cout << "Exiting...\n";
-                    break;
-                default:
-                    cout << "Invalid choice!\n";
+            }
+            else if (choice == 2) {
+                string u, p;
+                cout << "New Username: ";
+                cin >> u;
+                cout << "New Password: ";
+                cin >> p;
+
+                Admin a(u, p);
+                a.save();
+                cout << "Admin registered successfully\n";
+            }
+            else if (choice == 3) {
+                cout << "Exiting...\n";
+            }
+            else {
+                cout << "Invalid Choice\n";
             }
         } while (choice != 3);
     }
+
+private:
+    void adminMenu() {
+        int ch;
+        do {
+            cout << "\n1. View all complain\n2. Update complain status\n3. Logout\n";
+            cout << "Enter choice: ";
+            cin >> ch;
+
+            if (ch == 1) {
+                ComplaintManager::viewAll();
+            }
+            else if (ch == 2) {
+                int id;
+                string status;
+                cout << "Enter Complaint ID: ";
+                cin >> id;
+                cout << "Enter new status (Pending/In progress/Resolved): ";
+                cin.ignore();
+                getline(cin, status);
+
+                ComplaintManager::updateStatus(id, status);
+            }
+            else if (ch == 3) {
+                cout << "Logging out...\n";
+            }
+            else {
+                cout << "Invalid choice\n";
+            }
+        } while (ch != 3);
+    }
 };
 
-// Main
 int main() {
-    ComplaintSystem system("complaints.txt");
-    system.run();
+    AdminApp app;
+    app.menu();
     return 0;
 }
