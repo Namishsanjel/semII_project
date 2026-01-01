@@ -25,7 +25,7 @@ public:
     void save() {
         ofstream file("complaints.txt", ios::app);
         if (!file) {
-            cout << "❌ Error opening file!\n";
+            cout << "Error opening file!\n";
             return;
         }
         file << id << "|" << name << "|" << address << "|"
@@ -36,7 +36,7 @@ public:
     static bool showStatus(int searchId) {
         ifstream file("complaints.txt");
         if (!file) {
-            cout << "❌ File not found!\n";
+            cout << "File not found!\n";
             return false;
         }
 
@@ -45,7 +45,7 @@ public:
             int id;
             sscanf(line.c_str(), "%d|", &id);
             if (id == searchId) {
-                cout << "\n✅ Complaint Found\n";
+                cout << "\nComplaint Found\n";
                 cout << "Status: " << line.substr(line.find_last_of('|') + 1) << endl;
                 file.close();
                 return true;
@@ -81,7 +81,7 @@ public:
 
             if (!(cin >> choice)) {
                 clearInput();
-                cout << "❌ Invalid input!\n";
+                cout << "Invalid input!\n";
                 continue;
             }
 
@@ -100,7 +100,7 @@ public:
                     getline(cin, desc);
 
                     if (name.empty() || address.empty() || type.empty() || desc.empty()) {
-                        cout << "❌ All fields are required!\n";
+                        cout << "All fields are required!\n";
                         break;
                     }
 
@@ -108,7 +108,7 @@ public:
                     Complaint c(id, name, address, type, desc);
                     c.save();
 
-                    cout << "\n✅ Complaint Registered Successfully!\n";
+                    cout << "\nComplaint Registered Successfully!\n";
                     cout << "Your Complaint ID: " << id << endl;
                     break;
                 }
@@ -118,11 +118,11 @@ public:
                     cout << "Enter Complaint ID: ";
                     if (!(cin >> id)) {
                         clearInput();
-                        cout << "❌ Invalid ID format!\n";
+                        cout << "Invalid ID format!\n";
                         break;
                     }
                     if (!Complaint::showStatus(id)) {
-                        cout << "❌ No matching ID found!\n";
+                        cout << "No matching ID found!\n";
                     }
                     break;
                 }
@@ -132,7 +132,7 @@ public:
                     break;
 
                 default:
-                    cout << "❌ Invalid choice!\n";
+                    cout << "Invalid choice!\n";
             }
 
         } while (choice != 3);

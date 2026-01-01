@@ -21,7 +21,7 @@ public:
     void save() {
         ofstream file("admins.txt", ios::app);
         if (!file) {
-            cout << "❌ Error saving admin!\n";
+            cout << "Error saving admin!\n";
             return;
         }
         file << username << " " << password << endl;
@@ -31,7 +31,7 @@ public:
     static bool login(string u, string p) {
         ifstream file("admins.txt");
         if (!file) {
-            cout << "❌ Admin file missing!\n";
+            cout << "Admin file missing!\n";
             return false;
         }
 
@@ -53,7 +53,7 @@ public:
     static void viewAll() {
         ifstream file("complaints.txt");
         if (!file) {
-            cout << "❌ No complaints available!\n";
+            cout << "No complaints available!\n";
             return;
         }
 
@@ -70,7 +70,7 @@ public:
         ofstream temp("temp.txt");
 
         if (!file || !temp) {
-            cout << "❌ File error!\n";
+            cout << "File error!\n";
             return;
         }
 
@@ -95,9 +95,9 @@ public:
         rename("temp.txt", "complaints.txt");
 
         if (found)
-            cout << "✅ Status updated successfully!\n";
+            cout << "Status updated successfully!\n";
         else
-            cout << "❌ Invalid Complaint ID!\n";
+            cout << "Invalid Complaint ID!\n";
     }
 };
 
@@ -132,7 +132,7 @@ private:
                     if (status != "Pending" &&
                         status != "In Progress" &&
                         status != "Resolved") {
-                        cout << "❌ Invalid status!\n";
+                        cout << "Invalid status!\n";
                         break;
                     }
 
@@ -145,7 +145,7 @@ private:
                     break;
 
                 default:
-                    cout << "❌ Invalid choice!\n";
+                    cout << "Invalid choice!\n";
             }
         } while (ch != 3);
     }
@@ -168,7 +168,7 @@ public:
                 if (Admin::login(username, password)) {
                     adminMenu();
                 } else {
-                    cout << "❌ Invalid credentials!\n";
+                    cout << " Invalid credentials!\n";
                 }
             }
             else if (choice == 2) {
@@ -179,13 +179,13 @@ public:
 
                 Admin a(username, password);
                 a.save();
-                cout << "✅ Admin registered successfully!\n";
+                cout << " Admin registered successfully!\n";
             }
             else if (choice == 3) {
                 cout << "Exiting Admin...\n";
             }
             else {
-                cout << "❌ Invalid choice!\n";
+                cout << "Invalid choice!\n";
             }
         } while (choice != 3);
     }
